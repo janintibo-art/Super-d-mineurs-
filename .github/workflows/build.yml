@@ -1,0 +1,43 @@
+name: Build Démineur 3D APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le dépôt (contient le zip)
+        uses: actions/checkout@v4
+
+      - name: Décompresser le projet
+        run: unzip -o Demineur3D-android.zip      # -> crée le dossier Demineur3D/
+
+      - name: Installer JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Installer le SDK Android
+        uses: android-actions/setup-android@v3
+
+      - name: Plateforme & build-tools
+        run: yes | sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" >/dev/null
+
+      - name: Installer Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Compiler l'APK (debug)
+        working-directory: Demineur3D
+        run: gradle assembleDebug --stacktrace
+
+      - name: Publier l'APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Demineur3D-debug
+          path: Demineur3D/app/build/outputs/apk/debug/app-debug.apk
